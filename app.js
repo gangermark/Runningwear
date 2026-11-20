@@ -9,15 +9,20 @@ $('refresh').addEventListener('click', locate);
 function clothing(w, type) {
   const effective = w.apparent_temperature + (type === 'tempo' ? 4 : type === 'long' ? -1 : 2);
   const rain = w.precipitation > 0.2 || [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(w.weather_code);
-  const windy = w.wind_speed_10m >= 25;
+  const windy = w.wind_speed_10m >= 20;
   let top, bottom;
-  if(effective < -8){top='Underställ, varmt mellanlager och löparjacka';bottom='Varmare vintertights';}
-  else if(effective < 0){top='Tunt underställ och vindjacka';bottom='Långa löpartights';}
-  else if(effective < 7){top='Långärmad funktionströja';bottom='Långa löpartights';}
+  if(effective < -8){top='Underställ och varmt mellanlager';bottom='Varmare vintertights';}
+  else if(effective < 0){top='Tunt underställ och löparväst';bottom='Långa löpartights';}
+  else if(effective < 7){top='Långärmad funktionströja och löparväst';bottom='Långa löpartights';}
   else if(effective < 9){top='T-shirt eller tunn långärmad tröja';bottom='Shorts (eller tunna tights om du fryser lätt)';}
   else {top='T-shirt eller linne';bottom='Shorts';}
-  if(windy && effective >= -8 && !top.includes('vindjacka')) top += ' + tunn vindjacka';
-  if(rain && !top.includes('jacka')) top += ' + lätt regnjacka vid behov';
+  if(rain){
+    top=top.replace(' och löparväst','');
+    top += ' + lätt regnjacka';
+  } else if(windy){
+    top=top.replace(' och löparväst','');
+    top += ' + tunn vindjacka';
+  }
   const hands = effective < 3 ? 'Tunna löparhandskar' : 'Inga handskar';
   const head = effective < -4 ? 'Tunn löparmössa' : effective < 4 ? 'Pannband vid behov' : 'Ingen mössa';
   let tip = type === 'tempo' ? 'Du blir snabbt varm under intervaller. Klä dig lätt, men håll dig varm under uppvärmningen.' : type === 'long' ? 'Vid längre pass kan du bli kall när tempot sjunker. Ett extra tunt lager kan vara klokt.' : 'Det är normalt att känna sig lite sval de första 5–10 minuterna.';
