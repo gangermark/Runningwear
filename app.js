@@ -24,7 +24,7 @@ function clothing(w, type) {
     top += ' + tunn vindjacka';
   }
   const hands = effective < 3 ? 'Tunna löparhandskar' : 'Inga handskar';
-  const head = effective < -4 ? 'Tunn löparmössa' : effective < 4 ? 'Pannband vid behov' : 'Ingen mössa';
+  const head = effective < -4 ? 'Använd jackans huva om du fryser' : 'Inget behövs';
   let tip = type === 'tempo' ? 'Du blir snabbt varm under intervaller. Klä dig lätt, men håll dig varm under uppvärmningen.' : type === 'long' ? 'Vid längre pass kan du bli kall när tempot sjunker. Ett extra tunt lager kan vara klokt.' : 'Det är normalt att känna sig lite sval de första 5–10 minuterna.';
   if(rain) tip += ' Det finns tecken på nederbörd – välj gärna plagg som fungerar när de blir fuktiga.';
   if(windy) tip += ' Vinden gör utsatta sträckor kallare.';
