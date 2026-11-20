@@ -8,8 +8,13 @@ $('locate').addEventListener('click', locate);
 $('refresh').addEventListener('click', locate);
 const dateInput=$('runDate'),hourInput=$('runHour');
 function localDate(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
-const today=new Date(), maxDay=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
-dateInput.min=localDate(today);dateInput.max=localDate(maxDay);dateInput.value=localDate(today);
+const today=new Date();
+dateInput.innerHTML=Array.from({length:8},(_,i)=>{
+ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
+ const value=localDate(d);
+ const label=i===0?'Idag':i===1?'Imorgon':new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'short'}).format(d);
+ return '<option value="'+value+'">'+label+'</option>';
+}).join('');
 hourInput.innerHTML='<option value="now">Just nu</option>'+Array.from({length:24},(_,h)=>'<option value="'+String(h).padStart(2,'0')+'">'+String(h).padStart(2,'0')+':00</option>').join('');
 function syncHours(){
  const isToday=dateInput.value===localDate(new Date());
