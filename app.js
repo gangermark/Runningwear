@@ -1,11 +1,34 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { weather: null, place: '', last: null };
+const state = { weather: null, place: '', last: null, forecast: null, latitude: null, longitude: null };
 const runType = $('runType');
 runType.value = localStorage.getItem('runready-run') || 'easy';
 runType.addEventListener('change', () => { localStorage.setItem('runready-run',runType.value); render(); });
 $('locate').addEventListener('click', locate);
 $('refresh').addEventListener('click', locate);
+const dateInput=$('runDate'),hourInput=$('runHour');
+function localDate(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+const today=new Date(), maxDay=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+dateInput.min=localDate(today);dateInput.max=localDate(maxDay);dateInput.value=localDate(today);
+hourInput.innerHTML='<option value="now">Just nu</option>'+Array.from({length:24},(_,h)=>'<option value="'+String(h).padStart(2,'0')+'">'+String(h).padStart(2,'0')+':00</option>').join('');
+function syncHours(){
+ const isToday=dateInput.value===localDate(new Date());
+ hourInput.options[0].hidden=!isToday;
+ if(!isToday&&hourInput.value==='now')hourInput.value='09';
+}
+function chooseWeather(){
+ if(!state.forecast)return;
+ const currentDay=localDate(new Date());
+ if(dateInput.value===currentDay&&hourInput.value==='now'){state.weather=state.forecast.current;render();return;}
+ const target=dateInput.value+'T'+hourInput.value+':00';
+ const h=state.forecast.hourly;const idx=h.time.indexOf(target);
+ if(idx<0){$('status').textContent='Prognosen saknas för vald tid.';return;}
+ state.weather=Object.fromEntries(['temperature_2m','apparent_temperature','wind_speed_10m','precipitation','weather_code'].map(k=>[k,h[k][idx]]));
+ render();
+}
+dateInput.addEventListener('change',()=>{syncHours();chooseWeather();});
+hourInput.addEventListener('change',chooseWeather);
+syncHours();
 function clothing(w, type) {
   const effective = w.apparent_temperature + (type === 'tempo' ? 4 : type === 'long' ? -1 : 2);
   const rain = w.precipitation > 0.2 || [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(w.weather_code);
@@ -39,16 +62,20 @@ function render(){
   $('wind').textContent=Math.round(w.wind_speed_10m/3.6)+' m/s';
   for(const key of ['top','bottom','hands','head','tip']) $(key).textContent=c[key];
   $('place').textContent=state.place;
-  $('updated').textContent='Väder hämtat '+state.last.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})+' · Normal temperaturpreferens';
+  const future=!(dateInput.value===localDate(new Date())&&hourInput.value==='now');
+  $('status').textContent=future?'Väderprognos för '+dateInput.value+' kl. '+hourInput.value+':00':'Aktuellt väder för din position';
+  $('updated').textContent=(future?'Prognos hämtad ':'Väder hämtat ')+state.last.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})+' · Normal temperaturpreferens';
 }
 async function fetchWeather(lat,lon){
   const url=new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude',lat);url.searchParams.set('longitude',lon);
-  url.searchParams.set('current','temperature_2m,apparent_temperature,wind_speed_10m,precipitation,weather_code');
+  const fields='temperature_2m,apparent_temperature,wind_speed_10m,precipitation,weather_code';
+  url.searchParams.set('current',fields);url.searchParams.set('hourly',fields);url.searchParams.set('forecast_days','8');
   url.searchParams.set('wind_speed_unit','kmh');url.searchParams.set('timezone','auto');
   const res=await fetch(url);if(!res.ok)throw new Error('Vädertjänsten svarar inte. Försök igen.');
   const data=await res.json();if(!data.current || typeof data.current.apparent_temperature!=='number')throw new Error('Väderdata saknas just nu.');
-  return data.current;
+  if(!data.hourly || !data.hourly.time)throw new Error('Prognosdata saknas just nu.');
+  return data;
 }
 function gps(){return new Promise((resolve,reject)=>{
   if(!navigator.geolocation){reject(new Error('Din webbläsare stöder inte platsinformation.'));return;}
@@ -58,9 +85,10 @@ async function locate(){
   $('locate').disabled=true;$('status').textContent='Hämtar plats och aktuellt väder…';
   try{
     const {latitude,longitude}=await gps();
-    const w=await fetchWeather(latitude,longitude);
-    state.weather=w;state.place='📍 Din nuvarande plats';state.last=new Date();
-    $('status').textContent='Aktuellt väder för din position';render();
+    const forecast=await fetchWeather(latitude,longitude);
+    state.forecast=forecast;state.latitude=latitude;state.longitude=longitude;
+    state.place='📍 Din nuvarande plats';state.last=new Date();
+    chooseWeather();
   }catch(e){$('status').textContent=e.message || 'Något gick fel. Försök igen.';}
   finally{$('locate').disabled=false;}
 }
