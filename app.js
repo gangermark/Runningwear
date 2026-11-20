@@ -21,8 +21,38 @@ function syncHours(){
  hourInput.options[0].hidden=!isToday;
  if(!isToday&&hourInput.value==='now')hourInput.value='09';
 }
+function weatherSymbol(code){
+ if([0].includes(code))return '☀️';
+ if([1,2].includes(code))return '🌤️';
+ if([3].includes(code))return '☁️';
+ if([45,48].includes(code))return '🌫️';
+ if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code))return '🌧️';
+ if([71,73,75,77,85,86].includes(code))return '❄️';
+ if([95,96,99].includes(code))return '⛈️';
+ return '🌥️';
+}
+function renderHourly(){
+ const el=$('hourlyForecast');
+ if(!state.forecast){el.innerHTML='<p class="hourly-empty">Hämta väder för att se prognosen.</p>';return;}
+ const h=state.forecast.hourly, day=dateInput.value, now=new Date();
+ const selected=hourInput.value;
+ const hours=h.time.map((t,i)=>({t,i})).filter(x=>x.t.startsWith(day)&&
+ (day!==localDate(now)||Number(x.t.slice(11,13))>=now.getHours()));
+ el.innerHTML='';
+ for(const {t,i} of hours){
+  const hour=t.slice(11,13);
+  const btn=document.createElement('button');
+  btn.type='button';btn.className='hour-card'+(selected===hour?' selected':'');
+  btn.setAttribute('aria-pressed',String(selected===hour));
+  btn.innerHTML='<span class="hour-time">'+hour+':00</span><span class="hour-icon">'+weatherSymbol(h.weather_code[i])+'</span><strong>'+Math.round(h.temperature_2m[i])+'°</strong><span class="hour-detail">💨 '+Math.round(h.wind_speed_10m[i]/3.6)+' m/s</span>';
+  btn.addEventListener('click',()=>{hourInput.value=hour;chooseWeather();});
+  el.appendChild(btn);
+ }
+ if(!hours.length)el.innerHTML='<p class="hourly-empty">Inga kommande timmar idag.</p>';
+}
 function chooseWeather(){
  if(!state.forecast)return;
+ renderHourly();
  const currentDay=localDate(new Date());
  if(dateInput.value===currentDay&&hourInput.value==='now'){state.weather=state.forecast.current;render();return;}
  const target=dateInput.value+'T'+hourInput.value+':00';
