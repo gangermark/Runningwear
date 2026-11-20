@@ -12,7 +12,7 @@ function clothing(w, type) {
   const windy = w.wind_speed_10m >= 25;
   let top, bottom;
   if(effective < -8){top='Underställ, varmt mellanlager och löparjacka';bottom='Varmare vintertights';}
-  else if(effective < -1){top='Långärmad funktionströja och vindjacka';bottom='Långa löpartights';}
+  else if(effective < 0){top='Tunt underställ och vindjacka';bottom='Långa löpartights';}
   else if(effective < 7){top='Långärmad funktionströja';bottom='Långa löpartights';}
   else if(effective < 9){top='T-shirt eller tunn långärmad tröja';bottom='Shorts (eller tunna tights om du fryser lätt)';}
   else {top='T-shirt eller linne';bottom='Shorts';}
