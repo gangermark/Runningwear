@@ -159,7 +159,7 @@ function render(){
     }
     if(experience.comfort==='good' && Array.isArray(experience.clothes)){
       const tops=experience.clothes.filter(x=>['Underställströja','Långärmad funktionströja','T-shirt','Tjock löpartröja','Löparväst','Vindjacka'].includes(x));
-      const bottoms=experience.clothes.filter(x=>['Underställsbyxa','Löpartights','Shorts'].includes(x));
+      const bottoms=experience.clothes.filter(x=>['Underställsbyxa','Löpartights','Tunna löparbyxor','Shorts'].includes(x));
       if(tops.length)c.top=tops.join(' + ');
       if(bottoms.length)c.bottom=bottoms.join(' + ');
       c.hands=experience.clothes.includes('Handskar')?'Handskar':'Inga handskar';
