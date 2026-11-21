@@ -115,7 +115,7 @@ function updateFeedbackHistory(){
  }
 }
 function fillFeedbackDefaults(c){
- const wanted=[...c.top.split(/\\s*\\+\\s*| och /),...c.bottom.split(/\\s*\\+\\s*| och /)];
+ const wanted=[...c.top.split(/\s*\+\s*| och /),...c.bottom.split(/\s*\+\s*| och /)];
  if(c.hands==='Handskar')wanted.push('Handskar');
  if(c.head.includes('Mössa'))wanted.push('Mössa');
  if(c.head.includes('Halsbuff'))wanted.push('Halsbuff');
@@ -151,10 +151,10 @@ function render(){
       c.top=recordedOutfit(experience);
       c.bottom=experience.bottom;
       c.tip='Anpassat efter ett tidigare pass då du tyckte klädseln var lagom vid liknande väder. '+c.tip;
-    } else {
+    } else if(experience.comfort!=='good'){
       const direction=experience.comfort==='warm'?'lättare':'varmare';
       c.tip='Du upplevde ett tidigare pass i liknande väder som '+(experience.comfort==='warm'?'för varmt':'för kallt')+
-       ' med '+recordedOutfit(experience)+' och '+experience.bottom+
+       ' med '+recordedOutfit(experience)+(experience.bottom?' och '+experience.bottom:'')+
        '. Välj gärna '+direction+' kläder än då. '+c.tip;
     }
     if(experience.comfort==='good' && Array.isArray(experience.clothes)){
