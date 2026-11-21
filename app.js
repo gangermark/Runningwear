@@ -92,7 +92,7 @@ const LOG_KEY='runready-clothing-log-v1';
 function readLog(){try{const data=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');return Array.isArray(data)?data:[];}catch{return [];}}
 function recordedOutfit(entry){return entry.top+(entry.outer?' och '+entry.outer:'');}
 function nearestExperience(w,type){
- const matches=readLog().filter(e=>e.runType===type&&e.comfort==='good'&&Number.isFinite(e.feels)&&
+ const matches=readLog().filter(e=>e.runType===type&&Number.isFinite(e.feels)&&
  Math.abs(e.feels-w.apparent_temperature)<=4&&Math.abs(e.wind-w.wind_speed_10m)<=15&&
  Boolean(e.rain)===(w.precipitation>0.2||[51,53,55,61,63,65,80,81,82,95].includes(w.weather_code)));
  matches.sort((a,b)=>(Math.abs(a.feels-w.apparent_temperature)+Math.abs(a.wind-w.wind_speed_10m)/8)-
@@ -123,6 +123,7 @@ function fillFeedbackDefaults(c){
 $('feedbackForm').addEventListener('submit',event=>{
  event.preventDefault();
  if(!state.weather){$('feedbackStatus').textContent='Hämta väder innan du sparar, så kan passet kopplas till väderförhållandena.';return;}
+ if(dateInput.value!==localDate(new Date())){$('feedbackStatus').textContent='Välj Idag i datumfältet innan du sparar ett genomfört pass.';return;}
  const comfort=document.querySelector('input[name="comfort"]:checked');
  if(!comfort){$('feedbackStatus').textContent='Välj hur klädseln kändes.';return;}
  const w=state.weather;
@@ -141,9 +142,16 @@ function render(){
   const w=state.weather, c=clothing(w,runType.value);
   const experience=nearestExperience(w,runType.value);
   if(experience){
-    c.top=recordedOutfit(experience);
-    c.bottom=experience.bottom;
-    c.tip='Anpassat efter ett tidigare pass då du tyckte klädseln var lagom vid liknande väder. '+c.tip;
+    if(experience.comfort==='good'){
+      c.top=recordedOutfit(experience);
+      c.bottom=experience.bottom;
+      c.tip='Anpassat efter ett tidigare pass då du tyckte klädseln var lagom vid liknande väder. '+c.tip;
+    } else {
+      const direction=experience.comfort==='warm'?'lättare':'varmare';
+      c.tip='Du upplevde ett tidigare pass i liknande väder som '+(experience.comfort==='warm'?'för varmt':'för kallt')+
+       ' med '+recordedOutfit(experience)+' och '+experience.bottom+
+       '. Välj gärna '+direction+' kläder än då. '+c.tip;
+    }
   }
   $('weather').hidden=false; $('results').hidden=false;
   $('temp').textContent=Math.round(w.temperature_2m)+'°';
