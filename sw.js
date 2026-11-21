@@ -1,4 +1,4 @@
-const CACHE='runready-v8';
+const CACHE='runready-v9';
 const ASSETS=['./style.css?v=7','./app.js?v=7','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
