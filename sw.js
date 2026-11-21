@@ -1,5 +1,5 @@
-const CACHE='runready-v10';
-const ASSETS=['./style.css?v=7','./app.js?v=7','./manifest.webmanifest','./icon.svg'];
+const CACHE='runready-v11';
+const ASSETS=['./style.css?v=11','./app.js?v=11','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
  self.skipWaiting();
