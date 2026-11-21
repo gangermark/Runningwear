@@ -88,14 +88,69 @@ function clothing(w, type) {
   if(windy) tip += ' Vinden gör utsatta sträckor kallare.';
   return {top,bottom,hands,head,tip};
 }
+const LOG_KEY='runready-clothing-log-v1';
+function readLog(){try{const data=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');return Array.isArray(data)?data:[];}catch{return [];}}
+function recordedOutfit(entry){return entry.top+(entry.outer?' och '+entry.outer:'');}
+function nearestExperience(w,type){
+ const matches=readLog().filter(e=>e.runType===type&&e.comfort==='good'&&Number.isFinite(e.feels)&&
+ Math.abs(e.feels-w.apparent_temperature)<=4&&Math.abs(e.wind-w.wind_speed_10m)<=15&&
+ Boolean(e.rain)===(w.precipitation>0.2||[51,53,55,61,63,65,80,81,82,95].includes(w.weather_code)));
+ matches.sort((a,b)=>(Math.abs(a.feels-w.apparent_temperature)+Math.abs(a.wind-w.wind_speed_10m)/8)-
+ (Math.abs(b.feels-w.apparent_temperature)+Math.abs(b.wind-w.wind_speed_10m)/8));
+ return matches[0]||null;
+}
+function updateFeedbackHistory(){
+ const entries=readLog(),container=$('feedbackHistory');
+ $('feedbackCount').textContent=entries.length+' pass';
+ container.replaceChildren();
+ if(!entries.length){container.textContent='Inga pass sparade ännu.';return;}
+ for(const e of entries.slice().reverse().slice(0,5)){
+  const item=document.createElement('div');item.className='history-item';
+  const comfort={cold:'🥶 Kallt',good:'🙂 Lagom',warm:'🥵 Varmt'}[e.comfort]||'';
+  const heading=document.createElement('strong');
+  heading.textContent=e.date+' · '+Math.round(e.feels)+'° · '+comfort;
+  const detail=document.createElement('p');
+  detail.textContent=recordedOutfit(e)+' · '+e.bottom;
+  item.append(heading,detail);container.appendChild(item);
+ }
+}
+function fillFeedbackDefaults(c){
+ const top=c.top.toLowerCase(),bottom=c.bottom.toLowerCase();
+ $('wornTop').value=top.includes('varmt mellanlager')?'Underställ och varmt mellanlager':top.includes('underställ')?'Tunt underställ':top.includes('långärmad')?'Långärmad funktionströja':'T-shirt eller linne';
+ $('wornOuter').value=top.includes('regnjacka')?'lätt regnjacka':top.includes('vindjacka')?'tunn vindjacka':top.includes('väst')?'löparväst':'';
+ $('wornBottom').value=bottom.includes('vintertights')?'Varmare vintertights':bottom.includes('shorts')?'Shorts':bottom.includes('tunna tights')?'Tunna tights':'Långa löpartights';
+}
+$('feedbackForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ if(!state.weather){$('feedbackStatus').textContent='Hämta väder innan du sparar, så kan passet kopplas till väderförhållandena.';return;}
+ const comfort=document.querySelector('input[name="comfort"]:checked');
+ if(!comfort){$('feedbackStatus').textContent='Välj hur klädseln kändes.';return;}
+ const w=state.weather;
+ const rain=w.precipitation>0.2||[51,53,55,61,63,65,80,81,82,95].includes(w.weather_code);
+ const entry={date:localDate(new Date()),recordedAt:new Date().toISOString(),runType:runType.value,
+ top:$('wornTop').value,outer:$('wornOuter').value,bottom:$('wornBottom').value,
+ comfort:comfort.value,feels:w.apparent_temperature,wind:w.wind_speed_10m,rain};
+ try{const entries=readLog();entries.push(entry);localStorage.setItem(LOG_KEY,JSON.stringify(entries));}
+ catch{$('feedbackStatus').textContent='Kunde inte spara på enheten. Kontrollera webbläsarens lagringsinställningar.';return;}
+ $('feedbackStatus').textContent='Sparat! RunReady använder dina erfarenheter vid liknande väder.';
+ $('feedbackForm').reset();updateFeedbackHistory();render();
+});
+updateFeedbackHistory();
 function render(){
   if(!state.weather)return;
   const w=state.weather, c=clothing(w,runType.value);
+  const experience=nearestExperience(w,runType.value);
+  if(experience){
+    c.top=recordedOutfit(experience);
+    c.bottom=experience.bottom;
+    c.tip='Anpassat efter ett tidigare pass då du tyckte klädseln var lagom vid liknande väder. '+c.tip;
+  }
   $('weather').hidden=false; $('results').hidden=false;
   $('temp').textContent=Math.round(w.temperature_2m)+'°';
   $('feels').textContent=Math.round(w.apparent_temperature)+'°';
   $('wind').textContent=Math.round(w.wind_speed_10m/3.6)+' m/s';
   for(const key of ['top','bottom','hands','head','tip']) $(key).textContent=c[key];
+  if(!document.activeElement || !['wornTop','wornOuter','wornBottom'].includes(document.activeElement.id))fillFeedbackDefaults(c);
   $('place').textContent=state.place;
   const future=!(dateInput.value===localDate(new Date())&&hourInput.value==='now');
   $('status').textContent=future?'Väderprognos för '+dateInput.value+' kl. '+hourInput.value+':00':'Aktuellt väder för din position';
