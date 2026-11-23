@@ -119,6 +119,8 @@ function fillFeedbackDefaults(c){
  if(c.hands==='Handskar')wanted.push('Handskar');
  if(c.head.includes('Mössa'))wanted.push('Mössa');
  if(c.head.includes('Halsbuff'))wanted.push('Halsbuff');
+ if(c.head.includes('Pannband'))wanted.push('Pannband');
+ if(c.head.includes('Keps'))wanted.push('Keps');
  document.querySelectorAll('input[name="clothes"]').forEach(input=>{
   input.checked=wanted.some(part=>part.toLowerCase()===input.value.toLowerCase());
  });
@@ -163,7 +165,7 @@ function render(){
       if(tops.length)c.top=tops.join(' + ');
       if(bottoms.length)c.bottom=bottoms.join(' + ');
       c.hands=experience.clothes.includes('Handskar')?'Handskar':'Inga handskar';
-      c.head=experience.clothes.filter(x=>['Mössa','Halsbuff'].includes(x)).join(' + ')||'Inget behövs';
+      c.head=experience.clothes.filter(x=>['Mössa','Halsbuff','Pannband','Keps'].includes(x)).join(' + ')||'Inget behövs';
       c.tip='Baserat på ett tidigare pass där du var lagom klädd vid liknande väder. '+c.tip;
     }
   }
